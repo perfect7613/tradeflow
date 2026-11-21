@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, audioUrl, useTradeFlow, type Approval, type LiveEvent } from "@/lib/api";
 import { play, recordClip, stopAudio, unlockAudio } from "@/lib/audio";
 import { useEars, type EarsEvent } from "@/lib/ears";
-import { Dot, TabBar, inr } from "@/components/ui";
+import { Dot, Stamp, TabBar, inr } from "@/components/ui";
 
 type Phase = "idle" | "briefing" | "armed" | "explaining" | "listening" | "sending" | "done" | "expired";
 
@@ -18,6 +18,7 @@ export default function Ears() {
   const [said, setSaid] = useState<{ text: string; tone?: string } | null>(null);
   const [pin, setPin] = useState("");
   const [result, setResult] = useState<"approved" | "refused" | null>(null);
+  const [lastPayoutId, setLastPayoutId] = useState<string | null>(null);
   const briefed = useRef<string | null>(null);
   const startedRef = useRef(false);
   const busy = useRef(false);
@@ -34,6 +35,8 @@ export default function Ears() {
   const windowS = snap?.mode.approval_window_s ?? 10;
   const payout = approval ? snap?.payouts.find((p) => p.id === approval.payout_id) : undefined;
   const party = payout ? snap?.parties[payout.party_id] : undefined;
+  const lastPayout = lastPayoutId ? snap?.payouts.find((p) => p.id === lastPayoutId) : undefined;
+  const lastParty = lastPayout ? snap?.parties[lastPayout.party_id] : undefined;
 
   const ears = useEars((g) => handle(g));
   const earsOk = !ears.native || ears.connected !== false;
@@ -89,6 +92,7 @@ export default function Ears() {
         pin: pin || undefined,
       });
       const ok = gesture === "nod" || gesture === "approve";
+      setLastPayoutId(approval.payout_id);
       setResult(ok ? "approved" : "refused");
       setPhase("done");
     } catch (e) {
@@ -202,14 +206,16 @@ export default function Ears() {
       case "expired":
         return { big: "Window passed", small: "Nothing was approved. Replay to hear it again." };
       case "done":
-        return result === "approved"
-          ? { big: "Approved", small: "Cashfree is paying. The webhook will confirm." }
-          : { big: "Refused", small: "No money moved." };
+        if (result === "refused") return { big: "Refused", small: "No money moved." };
+        if (lastPayout?.status === "paid") return { big: "Paid", small: "Cashfree confirmed the transfer." };
+        if (lastPayout?.status === "failed") return { big: "Payment failed", small: "Cashfree couldn't complete it. Nothing was lost." };
+        return { big: "Approved", small: "Sending to Cashfree… the stamp turns green when Cashfree confirms." };
       default:
         return { big: "Ready", small: "" };
     }
   })();
 
+  const step = phase === "briefing" || phase === "explaining" ? 0 : phase === "armed" || phase === "listening" || phase === "expired" ? 1 : phase === "sending" || phase === "done" ? 2 : -1;
   const lit = phase === "armed";
   const R = 128;
   const C = 2 * Math.PI * R;
@@ -224,6 +230,8 @@ export default function Ears() {
           <Dot on={ears.native ? ears.connected : null} label={ears.native ? (ears.connected === false ? "AirPods out" : "AirPods") : "no head tracking"} />
         </div>
       </div>
+
+      {step >= 0 && <Steps step={step} paid={lastPayout?.status === "paid"} />}
 
       {/* orb */}
       <div className="relative mx-auto mt-6 grid h-[300px] w-[300px] place-items-center">
@@ -287,6 +295,26 @@ export default function Ears() {
           </div>
         )}
 
+        {phase === "done" && lastPayout && (
+          <div className="rise mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-left">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="num text-[30px] text-white">{inr(lastPayout.amount)}</span>
+                <p className="text-[13px] text-white/50">to {lastParty?.name ?? "payee"} · {lastPayout.to_account.masked}</p>
+              </div>
+              <span className="rounded-xl bg-paper px-1.5 py-0.5">
+                <Stamp status={lastPayout.status} className="text-[13px]" />
+              </span>
+            </div>
+            {lastPayout.cf_transfer_id && <p className="num mt-3 text-[11px] text-white/40">Cashfree transfer {lastPayout.cf_transfer_id}</p>}
+            <Link href={`/flow?id=${lastPayout.id}`} className="mt-4 block rounded-2xl border border-white/15 py-3 text-center text-[14px] font-semibold text-white">
+              See how it was decided →
+            </Link>
+          </div>
+        )}
+
+        {phase === "idle" && <Recent snap={snap} />}
+
         {said && (
           <p className={`rise mt-4 rounded-2xl p-4 text-left text-[14px] leading-relaxed ${said.tone === "refuse" ? "bg-[#ff6b52]/10 text-[#ffb3a6]" : "bg-white/5 text-white/70"}`}>
             {said.text}
@@ -345,6 +373,51 @@ export default function Ears() {
       </section>
       <TabBar dark />
     </main>
+  );
+}
+
+function Steps({ step, paid }: { step: number; paid: boolean }) {
+  const labels = ["Listen", "Nod", paid ? "Paid" : "Pay"];
+  return (
+    <ol className="mx-auto mt-4 flex max-w-xs items-center justify-center gap-2 text-[11px] font-semibold tracking-wide">
+      {labels.map((l, i) => (
+        <li key={l} className="flex items-center gap-2">
+          <span
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
+              i < step || (i === 2 && paid) ? "bg-emerald-400/15 text-emerald-300" : i === step ? "bg-glow/20 text-glow" : "text-white/30"
+            }`}
+          >
+            {i < step || (i === 2 && paid) ? "✓" : i + 1} {l}
+          </span>
+          {i < 2 && <span className="h-px w-4 bg-white/15" />}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Recent({ snap }: { snap: ReturnType<typeof useTradeFlow>["snap"] }) {
+  const recent = [...(snap?.payouts ?? [])].reverse().slice(0, 3);
+  if (!recent.length) return null;
+  return (
+    <div className="mt-8 text-left">
+      <p className="mb-2 px-1 text-[11px] font-semibold tracking-[0.2em] text-white/40 uppercase">Recent</p>
+      <ul className="space-y-2">
+        {recent.map((p) => (
+          <li key={p.id}>
+            <Link href={`/flow?id=${p.id}`} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <span className="min-w-0">
+                <span className="num block text-[17px] text-white">{inr(p.amount)}</span>
+                <span className="block truncate text-[12px] text-white/45">{snap?.parties[p.party_id]?.name ?? "payee"}</span>
+              </span>
+              <span className={`shrink-0 text-[12px] font-semibold ${p.status === "paid" ? "text-emerald-300" : p.status === "refused" || p.status === "failed" ? "text-[#ff8a75]" : "text-glow"}`}>
+                {p.status.replace("_", " ")} ›
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

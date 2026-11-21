@@ -31,9 +31,7 @@ from .money import inr, mask
 
 def cash_position(ledger: Ledger) -> CashPosition:
     pending_out = sum(
-        p.amount
-        for p in ledger.payouts.values()
-        if p.status in {PayoutStatus.SUBMITTED, PayoutStatus.SENT, PayoutStatus.UNKNOWN}
+        p.amount for p in ledger.payouts.values() if p.status in {PayoutStatus.SUBMITTED, PayoutStatus.SENT, PayoutStatus.UNKNOWN}
     )
     horizon = now() + timedelta(days=7)
     due_7d = sum(
@@ -143,7 +141,9 @@ def options(ledger: Ledger) -> list[Option]:
 
     release = ledger.fact("forwarder_release")  # None = unknown, True/False from the call
     full = disputed.outstanding
-    at_quote = min(full, disputed.quoted or full)
+    # What is still owed up to the quote, after anything already paid on this invoice.
+    at_quote = min(full, max(0, (disputed.quoted or full) - disputed.paid))
+    quote_paid = disputed.quoted is not None and at_quote == 0
 
     # A: everything in full
     total_a = base_total + full
@@ -165,7 +165,7 @@ def options(ledger: Ledger) -> list[Option]:
         )
     )
 
-    # B: disputed invoice at the quoted amount only
+    # B: disputed invoice at the quoted amount only (gone once the quote is paid)
     total_b = base_total + at_quote
     needs = None if release is True else "forwarder_release"
     if release is True:
@@ -174,32 +174,36 @@ def options(ledger: Ledger) -> list[Option]:
         catch_b = "Forwarder refused to release on part payment"
     else:
         catch_b = f"Only works if the forwarder releases cargo on {inr(at_quote)}"
-    opts.append(
-        Option(
-            key="B",
-            title=f"Pay {disputed.label} at quote ({inr(at_quote)}), rest in full",
-            pays=base + [PlanLine(obligation_id=disputed.id, label=disputed.label, amount=at_quote)],
-            pays_now=total_b,
-            cash_left=cash - total_b,
-            feasible=cash >= total_b and release is not False,
-            needs=needs,
-            catch=catch_b,
+    if not quote_paid:
+        opts.append(
+            Option(
+                key="B",
+                title=f"Pay {disputed.label} at quote ({inr(at_quote)}), rest in full",
+                pays=base + [PlanLine(obligation_id=disputed.id, label=disputed.label, amount=at_quote)],
+                pays_now=total_b,
+                cash_left=cash - total_b,
+                feasible=cash >= total_b and release is not False,
+                needs=needs,
+                catch=catch_b,
+            )
         )
-    )
 
-    # C: hold the disputed invoice
+    # C: hold the disputed invoice (after the quote is paid: hold only the disputed part)
     total_c = base_total
+    held_catch = (
+        f"Quote paid and cargo released; {inr(disputed.disputed)} waits for proof of the charge"
+        if quote_paid
+        else f"Cargo held; storage {inr(storage['per_day'])}/day starts in {storage['free_hours_left']} hours"
+    )
     opts.append(
         Option(
             key="C",
-            title=f"Hold {disputed.label}",
+            title=f"Keep the disputed {inr(disputed.disputed)} on hold" if quote_paid else f"Hold {disputed.label}",
             pays=base,
             pays_now=total_c,
             cash_left=cash - total_c,
             feasible=cash >= total_c,
-            catch=(
-                f"Cargo held; storage {inr(storage['per_day'])}/day starts in {storage['free_hours_left']} hours"
-            ),
+            catch=held_catch,
         )
     )
     return _rank(opts, ledger)
@@ -325,7 +329,11 @@ def check_payout(ledger: Ledger, payout: Payout) -> list[RuleResult]:
 
     # 8. Cash: never pay what we do not have.
     spendable = cash_position(ledger).spendable
-    add("cash_available", spendable >= payout.amount, f"Spendable {inr(spendable)} for {inr(payout.amount)}")
+    add(
+        "cash_available",
+        spendable >= payout.amount,
+        f"Spendable {inr(spendable)} for {inr(payout.amount)}",
+    )
 
     return results
 

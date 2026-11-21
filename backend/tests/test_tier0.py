@@ -20,6 +20,17 @@ def test_forwarder_answer_reorders_options(tf):
     assert not next(o for o in ranked if o.key == "B").feasible
 
 
+def test_once_the_quote_is_paid_only_the_disputed_part_is_held(tf):
+    ob = scenario.add_forwarder_invoice(tf.L, scenario.SAMPLE_INVOICE, "test")
+    tf.L.learn("forwarder_release", True, "test")
+    fwd = ob if hasattr(ob, "paid") else next(o for o in tf.L.obligations.values() if o.disputed > 0)
+    fwd.paid = fwd.quoted or 0
+    opts = {o.key: o for o in tier0.options(tf.L)}
+    assert "B" not in opts  # nothing left to pay "at quote"
+    assert opts["C"].title == "Keep the disputed ₹18,000 on hold"
+    assert "cargo released" in opts["C"].catch
+
+
 def test_buyer_weight_comes_from_record_then_from_call(tf):
     cash = tier0.cash_position(tf.L)
     assert cash.expected_in_weighted == 1_50_000  # 2.5 lakh x (1 - 2/5)

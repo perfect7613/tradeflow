@@ -64,9 +64,9 @@ export function Section({ title, aside, children, className = "" }: { title: str
 const TABS = [
   { href: "/", label: "Room", glyph: "₹" },
   { href: "/ears", label: "Ears", glyph: "◖◗" },
+  { href: "/flow", label: "Flow", glyph: "⤵" },
   { href: "/translate", label: "Translate", glyph: "அ" },
   { href: "/phone", label: "Phone", glyph: "☏" },
-  { href: "/scorecard", label: "Traps", glyph: "✓" },
 ];
 
 export function TabBar({ dark = false }: { dark?: boolean }) {

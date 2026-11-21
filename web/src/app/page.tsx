@@ -58,6 +58,9 @@ function Header({ snap, online }: { snap: Snapshot; online: boolean }) {
         <Chip on={!snap.mode.rails.startsWith("sim")}>Cashfree: {snap.mode.rails}</Chip>
         <Chip on={snap.mode.calls === "phone"}>Calls: {snap.mode.calls}</Chip>
         <Chip on={snap.mode.sarvam}>Sarvam {snap.mode.sarvam ? "connected" : "missing key"}</Chip>
+        <Link href="/scorecard" className="rounded-full border border-ink/20 px-2.5 py-1 text-ink hover:bg-ink/5">
+          Trap scorecard →
+        </Link>
       </div>
     </header>
   );
@@ -335,8 +338,8 @@ function Payouts({ snap }: { snap: Snapshot }) {
                 </p>
                 {p.reason && p.status === "refused" && <p className="mt-1 text-[12px] text-stamp-red">{p.reason}</p>}
                 {p.reason_spoken && p.status === "refused" && <p className="mt-0.5 text-[12px] text-ink-soft">“{p.reason_spoken}”</p>}
-                <Link href={`/trail?id=${p.id}`} className="mt-1 inline-block text-[12px] font-semibold underline underline-offset-4">
-                  Why?
+                <Link href={`/flow?id=${p.id}`} className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ink/[0.06] px-2.5 py-1 text-[12px] font-semibold">
+                  See how it was decided →
                 </Link>
                 {p.simulated && <span className="ml-2 text-[10px] uppercase tracking-wider text-ink-soft">simulated rails</span>}
               </div>
