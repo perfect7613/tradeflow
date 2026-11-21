@@ -89,6 +89,24 @@ struct WebShell: UIViewRepresentable {
             decisionHandler(.grant)
         }
 
+        // Demo on a local network: trust the self-signed certificate of the server the user typed in,
+        // but only for that host and only when it's a private address or .local name.
+        func webView(
+            _ webView: WKWebView,
+            didReceive challenge: URLAuthenticationChallenge,
+            completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+        ) {
+            let host = challenge.protectionSpace.host
+            let local = host.hasPrefix("192.168.") || host.hasPrefix("10.") || host.hasPrefix("172.") || host.hasSuffix(".local")
+            if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+               local, host == webView.url?.host ?? host,
+               let trust = challenge.protectionSpace.serverTrust {
+                completionHandler(.useCredential, URLCredential(trust: trust))
+            } else {
+                completionHandler(.performDefaultHandling, nil)
+            }
+        }
+
         // Payment links open in Safari, not inside the shell.
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             if let url = navigationAction.request.url { UIApplication.shared.open(url) }
