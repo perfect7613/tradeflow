@@ -11,6 +11,7 @@
 		31D72E8FDF8DF4489C901F1C /* HeadMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3AD81DCBF8E8DD5560FA250 /* HeadMotion.swift */; };
 		33B9C0AB41715B9D450F2144 /* TradeFlowEarsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1111A2F3E1B32CDA9A250CA0 /* TradeFlowEarsApp.swift */; };
 		340F0169EB8FA48CB99BF404 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6F03340685B3AADAB0FBFB7B /* Assets.xcassets */; };
+		E6D1804BA72A04308FC4B584 /* Reach.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF57FB75EEA757388D68F07 /* Reach.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +19,7 @@
 		50A08E1A76CB692F340C7F29 /* TradeFlowEars.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TradeFlowEars.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F03340685B3AADAB0FBFB7B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C3AD81DCBF8E8DD5560FA250 /* HeadMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadMotion.swift; sourceTree = "<group>"; };
+		CDF57FB75EEA757388D68F07 /* Reach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reach.swift; sourceTree = "<group>"; };
 		EC2D1C7B9124D1EF0D12ABC3 /* WebShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebShell.swift; sourceTree = "<group>"; };
 		F14442BA2C3A697D9457DE2D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -37,6 +39,7 @@
 				6F03340685B3AADAB0FBFB7B /* Assets.xcassets */,
 				C3AD81DCBF8E8DD5560FA250 /* HeadMotion.swift */,
 				F14442BA2C3A697D9457DE2D /* Info.plist */,
+				CDF57FB75EEA757388D68F07 /* Reach.swift */,
 				1111A2F3E1B32CDA9A250CA0 /* TradeFlowEarsApp.swift */,
 				EC2D1C7B9124D1EF0D12ABC3 /* WebShell.swift */,
 			);
@@ -123,6 +126,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				31D72E8FDF8DF4489C901F1C /* HeadMotion.swift in Sources */,
+				E6D1804BA72A04308FC4B584 /* Reach.swift in Sources */,
 				33B9C0AB41715B9D450F2144 /* TradeFlowEarsApp.swift in Sources */,
 				2890D14ECF207F7A99292985 /* WebShell.swift in Sources */,
 			);

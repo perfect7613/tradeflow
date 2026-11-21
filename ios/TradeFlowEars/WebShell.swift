@@ -32,7 +32,12 @@ struct WebShell: UIViewRepresentable {
         #endif
         context.coordinator.web = web
         context.coordinator.wire()
-        web.load(URLRequest(url: url))
+        print("[shell] loading \(url)")
+        Task { @MainActor in
+            let r = await Reach.shared.check(url)
+            print("[shell] reach: \(r)")
+            web.load(URLRequest(url: url))
+        }
         return web
     }
 
@@ -116,8 +121,13 @@ struct WebShell: UIViewRepresentable {
             showError(webView, error)
         }
 
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            print("[shell] loaded \(webView.url?.absoluteString ?? "")")
+        }
+
         private func showError(_ webView: WKWebView, _ error: Error) {
             let e = error as NSError
+            print("[shell] load failed: \(e)")
             if e.code == NSURLErrorCancelled { return }
             let target = (e.userInfo[NSURLErrorFailingURLStringErrorKey] as? String) ?? webView.url?.absoluteString ?? ""
             let msg = e.localizedDescription.replacingOccurrences(of: "<", with: "&lt;")
