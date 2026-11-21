@@ -2,6 +2,17 @@ import SwiftUI
 
 @main
 struct TradeFlowEarsApp: App {
+    init() {
+        // `-serverURL <url>` at launch (xcrun devicectl ... -- -serverURL ...) is saved, so
+        // reopening from the home screen keeps using it.
+        if let url = UserDefaults.standard.volatileDomain(forName: UserDefaults.argumentDomain)["serverURL"] as? String {
+            UserDefaults.standard.setPersistentDomain(
+                (UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? "") ?? [:]).merging(["serverURL": url]) { $1 },
+                forName: Bundle.main.bundleIdentifier ?? ""
+            )
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
