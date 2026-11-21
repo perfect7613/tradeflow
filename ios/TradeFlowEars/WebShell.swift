@@ -107,6 +107,38 @@ struct WebShell: UIViewRepresentable {
             }
         }
 
+        // Never leave a blank screen: show what went wrong and a retry button.
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            showError(webView, error)
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            showError(webView, error)
+        }
+
+        private func showError(_ webView: WKWebView, _ error: Error) {
+            let e = error as NSError
+            if e.code == NSURLErrorCancelled { return }
+            let target = (e.userInfo[NSURLErrorFailingURLStringErrorKey] as? String) ?? webView.url?.absoluteString ?? ""
+            let msg = e.localizedDescription.replacingOccurrences(of: "<", with: "&lt;")
+            let html = """
+            <html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
+            <body style='background:#0d1024;color:#f2ecdf;font:16px -apple-system;padding:64px 24px'>
+            <h2 style='font-family:Georgia;font-weight:400'>Can't reach TradeFlow</h2>
+            <p style='opacity:.7'>\(msg)</p>
+            <p style='opacity:.5;font-size:13px;word-break:break-all'>\(target)</p>
+            <ul style='opacity:.7;font-size:14px;line-height:1.6'>
+              <li>Is the iPhone on the same Wi-Fi as the laptop?</li>
+              <li>Settings → Privacy &amp; Security → Local Network → TradeFlow is on?</li>
+              <li>Is the server running?</li>
+            </ul>
+            <a href='\(target)' style='display:block;margin-top:24px;padding:14px;border-radius:14px;background:#f4b740;color:#0d1024;text-align:center;font-weight:600;text-decoration:none'>Retry</a>
+            <p style='opacity:.5;font-size:13px;margin-top:16px'>Long-press anywhere to change the address.</p>
+            </body></html>
+            """
+            webView.loadHTMLString(html, baseURL: nil)
+        }
+
         // Payment links open in Safari, not inside the shell.
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             if let url = navigationAction.request.url { UIApplication.shared.open(url) }

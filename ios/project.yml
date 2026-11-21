@@ -24,6 +24,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: TradeFlow
         INFOPLIST_KEY_NSMotionUsageDescription: TradeFlow reads your AirPods head movement so you can approve a payment with a nod.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: TradeFlow listens when you speak to change an amount or use live translation.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: TradeFlow connects to the TradeFlow server running on your laptop over Wi-Fi.
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent
