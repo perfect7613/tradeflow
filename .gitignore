@@ -1,0 +1,25 @@
+# secrets
+.env
+*.pem
+backend/.env
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# web
+web/node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+*.tsbuildinfo
+
+# ios
+ios/build/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+
+.DS_Store
