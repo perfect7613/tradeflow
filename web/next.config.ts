@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: false,
   images: { unoptimized: true },
+  // Styles ship inside each HTML page, so a stale or blocked stylesheet request can never leave the page unstyled.
+  experimental: { inlineCss: true },
   turbopack: {
     rules: {
       "*.css": {

@@ -420,7 +420,9 @@ async def web(path: str) -> Response:
         raise HTTPException(404)
     for candidate in (target, target.with_suffix(".html"), target / "index.html"):
         if candidate.is_file():
-            return FileResponse(candidate)
+            # Pages must always be fresh (they name the hashed assets); hashed assets can be cached forever.
+            cache = "no-cache" if candidate.suffix in {".html", ".txt", ".webmanifest"} or candidate.name == "sw.js" else "public, max-age=31536000, immutable"
+            return FileResponse(candidate, headers={"Cache-Control": cache})
     return FileResponse(_web / "404.html", status_code=404) if (_web / "404.html").exists() else HTMLResponse("not found", 404)
 
 
